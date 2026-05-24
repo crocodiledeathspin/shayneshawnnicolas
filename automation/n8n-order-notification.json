@@ -1,0 +1,114 @@
+{
+  "name": "Aling Rosa - Order Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aling-rosa-order",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "aling-rosa-order"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "order-placed",
+              "leftValue": "={{ $json.body.event }}",
+              "rightValue": "order.placed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-node",
+      "name": "Is New Order?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "fromEmail": "store@example.com",
+        "toEmail": "={{ $json.body.customer_email || 'owner@example.com' }}",
+        "subject": "=New Order {{ $json.body.order_number }} - Aling Rosa's Store",
+        "emailType": "text",
+        "message": "=Hello {{ $json.body.customer_name }},\n\nWe received your order {{ $json.body.order_number }}.\nType: {{ $json.body.fulfillment_type }}\nTotal: PHP {{ $json.body.total_amount }}\n\nWe will prepare it soon. Track at the shop page.\n\nThank you!\nAling Rosa's Sari-Sari, Street Food & Shakes\nRoxas City"
+      },
+      "id": "email-node",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [480, -80],
+      "credentials": {
+        "smtp": {
+          "id": "CONFIGURE_SMTP",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Setup\n1. Import this workflow in n8n\n2. Activate workflow\n3. Copy Webhook URL to backend `.env` as `N8N_WEBHOOK_URL`\n4. Configure SMTP credentials for email node\n5. Place a test order from http://localhost:5173/shop",
+        "height": 200,
+        "width": 400
+      },
+      "id": "sticky-note",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, -200]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is New Order?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is New Order?": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "instanceId": "aling-rosa-store"
+  },
+  "tags": []
+}
