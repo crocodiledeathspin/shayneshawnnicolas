@@ -14,6 +14,7 @@ class Sale extends Model
     protected $primaryKey = 'sale_id';
 
     protected $fillable = [
+        'order_id',
         'product_id',
         'user_id',
         'quantity',
@@ -38,6 +39,11 @@ class Sale extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class, 'order_id', 'order_id');
     }
 
     public function getRouteKeyName(): string

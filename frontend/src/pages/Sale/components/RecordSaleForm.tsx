@@ -8,10 +8,11 @@ import type { SaleFieldErrors } from '../../../interfaces/SaleColumns'
 
 interface Props {
   onSaleRecorded: (msg: string, failed?: boolean) => void
-  refreshKey: () => void
+  refreshKey: boolean
+  triggerRefresh: () => void
 }
 
-const RecordSaleForm: FC<Props> = ({ onSaleRecorded, refreshKey }) => {
+const RecordSaleForm: FC<Props> = ({ onSaleRecorded, refreshKey, triggerRefresh }) => {
   const [products, setProducts] = useState<{ value: number; label: string }[]>([])
   const [product, setProduct] = useState('')
   const [quantity, setQuantity] = useState('1')
@@ -26,7 +27,7 @@ const RecordSaleForm: FC<Props> = ({ onSaleRecorded, refreshKey }) => {
         label: `${p.product_name} (₱${Number(p.price).toFixed(2)} | Stock: ${p.stock_qty})`,
       })))
     })
-  }, [])
+  }, [refreshKey])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -38,7 +39,7 @@ const RecordSaleForm: FC<Props> = ({ onSaleRecorded, refreshKey }) => {
       setQuantity('1')
       setNotes('')
       setErrors({})
-      refreshKey()
+      triggerRefresh()
     } catch (error: unknown) {
       const err = error as { response?: { status: number; data: { message?: string; errors?: SaleFieldErrors } } }
       if (err.response?.status === 422) {

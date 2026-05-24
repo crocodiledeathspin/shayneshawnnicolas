@@ -1,6 +1,8 @@
 import axios from 'axios'
 
-const AxiosInstance = axios.create({ baseURL: 'http://127.0.0.1:8000/api' })
+const baseURL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
+
+const AxiosInstance = axios.create({ baseURL })
 
 AxiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
@@ -18,9 +20,23 @@ AxiosInstance.interceptors.request.use((config) => {
 AxiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status !== 422) {
-      console.error('Unexpected response error: ', error)
+    if (error.response?.status === 401) {
+      const isPublicShop =
+        error.config?.url?.includes('/shop/') ||
+        error.config?.url?.includes('/auth/login')
+
+      if (!isPublicShop) {
+        localStorage.removeItem('token')
+        if (!window.location.pathname.startsWith('/shop') && window.location.pathname !== '/') {
+          window.location.href = '/'
+        }
+      }
     }
+
+    if (error.response?.status !== 422) {
+      console.error('API error:', error.response?.status, error.config?.url)
+    }
+
     return Promise.reject(error)
   },
 )

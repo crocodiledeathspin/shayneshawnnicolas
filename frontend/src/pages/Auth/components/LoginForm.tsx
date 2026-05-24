@@ -67,11 +67,11 @@ const LoginForm: FC<LoginFormProps> = ({ message }) => {
         className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-3 rounded-xl shadow-lg transition"
       />
       <p className="text-xs text-gray-500 mt-4 text-center">
-        Staff demo: owner / owner123
+        
       </p>
       <p className="text-center mt-4 pt-4 border-t">
         <Link to="/shop" className="text-orange-600 font-medium hover:underline">
-          Order online as customer (no login)
+          
         </Link>
       </p>
     </form>

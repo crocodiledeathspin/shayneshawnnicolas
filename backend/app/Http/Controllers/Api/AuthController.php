@@ -49,8 +49,16 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
+        $user = $request->user();
+
+        if ($user->is_deleted) {
+            $user->tokens()->delete();
+
+            return response()->json(['message' => 'Account is no longer active.'], 401);
+        }
+
         return response()->json([
-            'user' => $request->user(),
+            'user' => $user,
         ], 200);
     }
 }

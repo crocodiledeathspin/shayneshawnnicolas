@@ -30,8 +30,9 @@ const SaleList: FC<Props> = ({ refreshKey, onCancel, triggerRefresh }) => {
       onCancel(res.data.message)
       triggerRefresh()
       loadSales()
-    } catch {
-      onCancel('Failed to cancel sale', true)
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } }
+      onCancel(e.response?.data?.message || 'Failed to cancel sale', true)
     }
   }
 
@@ -56,12 +57,23 @@ const SaleList: FC<Props> = ({ refreshKey, onCancel, triggerRefresh }) => {
             sales.map((s) => (
               <TableRow key={s.sale_id}>
                 <TableCell className="px-3 py-3">{new Date(s.sale_date).toLocaleString()}</TableCell>
-                <TableCell className="px-3 py-3">{s.product?.product_name}</TableCell>
+                <TableCell className="px-3 py-3">
+                  {s.product?.product_name}
+                  {s.order_id && (
+                    <span className="block text-xs text-orange-600">Online order</span>
+                  )}
+                </TableCell>
                 <TableCell className="px-3 py-3">{s.quantity}</TableCell>
                 <TableCell className="px-3 py-3">₱{Number(s.total_amount).toFixed(2)}</TableCell>
                 <TableCell className="px-3 py-3">{s.user?.full_name}</TableCell>
                 <TableCell className="px-3 py-3">
-                  <button onClick={() => handleCancel(s.sale_id)} className="text-red-600 hover:underline text-xs">Cancel</button>
+                  {s.order_id ? (
+                    <span className="text-xs text-gray-400">Cancel via Orders</span>
+                  ) : (
+                    <button onClick={() => handleCancel(s.sale_id)} className="text-red-600 hover:underline text-xs">
+                      Cancel
+                    </button>
+                  )}
                 </TableCell>
               </TableRow>
             ))

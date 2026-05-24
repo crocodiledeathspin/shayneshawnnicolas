@@ -37,6 +37,10 @@ class StaffController extends Controller
             'role' => ['required', 'in:owner,staff'],
         ]);
 
+        if ($validated['role'] === 'owner' && $request->user()->role !== 'owner') {
+            return response()->json(['message' => 'Only owners can create owner accounts.'], 403);
+        }
+
         User::create([
             'full_name' => $validated['full_name'],
             'username' => $validated['username'],
@@ -51,12 +55,20 @@ class StaffController extends Controller
 
     public function updateStaff(Request $request, User $staff)
     {
+        if ($staff->is_deleted) {
+            return response()->json(['message' => 'Staff not found.'], 404);
+        }
+
         $validated = $request->validate([
             'full_name' => ['required', 'max:100'],
             'username' => ['required', 'min:4', 'max:55', Rule::unique('tbl_users', 'username')->ignore($staff->user_id, 'user_id')],
             'password' => ['nullable', 'min:6', 'max:55', 'confirmed'],
             'role' => ['required', 'in:owner,staff'],
         ]);
+
+        if ($validated['role'] === 'owner' && $request->user()->role !== 'owner') {
+            return response()->json(['message' => 'Only owners can assign owner role.'], 403);
+        }
 
         $data = [
             'full_name' => $validated['full_name'],
@@ -76,8 +88,24 @@ class StaffController extends Controller
         ], 200);
     }
 
-    public function destroyStaff(User $staff)
+    public function destroyStaff(Request $request, User $staff)
     {
+        if ($staff->is_deleted) {
+            return response()->json(['message' => 'Staff not found.'], 404);
+        }
+
+        if ($staff->user_id === $request->user()->user_id) {
+            return response()->json(['message' => 'You cannot delete your own account.'], 422);
+        }
+
+        if ($staff->role === 'owner') {
+            $ownerCount = User::where('role', 'owner')->where('is_deleted', false)->count();
+            if ($ownerCount <= 1) {
+                return response()->json(['message' => 'Cannot delete the last owner account.'], 422);
+            }
+        }
+
+        $staff->tokens()->delete();
         $staff->update(['is_deleted' => true]);
 
         return response()->json([

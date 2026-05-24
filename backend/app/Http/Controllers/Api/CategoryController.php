@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -19,7 +20,13 @@ class CategoryController extends Controller
 
     public function getCategory($categoryId)
     {
-        $category = Category::find($categoryId);
+        $category = Category::where('category_id', $categoryId)
+            ->where('is_deleted', false)
+            ->first();
+
+        if (!$category) {
+            return response()->json(['message' => 'Category not found.'], 404);
+        }
 
         return response()->json([
             'category' => $category,
@@ -42,6 +49,10 @@ class CategoryController extends Controller
 
     public function updateCategory(Request $request, Category $category)
     {
+        if ($category->is_deleted) {
+            return response()->json(['message' => 'Category not found.'], 404);
+        }
+
         $validated = $request->validate([
             'category_name' => ['required', 'min:2', 'max:60'],
             'description' => ['nullable', 'max:150'],
@@ -57,6 +68,20 @@ class CategoryController extends Controller
 
     public function destroyCategory(Category $category)
     {
+        if ($category->is_deleted) {
+            return response()->json(['message' => 'Category not found.'], 404);
+        }
+
+        $activeProducts = Product::where('category_id', $category->category_id)
+            ->where('is_deleted', false)
+            ->count();
+
+        if ($activeProducts > 0) {
+            return response()->json([
+                'message' => "Cannot delete: {$activeProducts} active product(s) use this category.",
+            ], 422);
+        }
+
         $category->update(['is_deleted' => true]);
 
         return response()->json([

@@ -4,15 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Product;
-use App\Models\Sale;
 use App\Services\N8nWebhookService;
+use App\Services\OrderStatusService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class OrderController extends Controller
 {
+    public function __construct(
+        private OrderStatusService $orderStatusService
+    ) {}
+
     public function loadOrders(Request $request)
     {
         $status = $request->input('status');
@@ -46,6 +48,10 @@ class OrderController extends Controller
 
     public function getOrder(Order $order)
     {
+        if ($order->is_deleted) {
+            return response()->json(['message' => 'Order not found.'], 404);
+        }
+
         $order->load(['items.product', 'handler']);
 
         return response()->json(['order' => $order], 200);
@@ -53,6 +59,10 @@ class OrderController extends Controller
 
     public function updateOrderStatus(Request $request, Order $order)
     {
+        if ($order->is_deleted) {
+            return response()->json(['message' => 'Order not found.'], 404);
+        }
+
         $validated = $request->validate([
             'status' => ['required', 'in:pending,accepted,preparing,ready_for_pickup,out_for_delivery,completed,cancelled'],
         ]);
@@ -60,32 +70,15 @@ class OrderController extends Controller
         $oldStatus = $order->status;
         $newStatus = $validated['status'];
 
-        DB::transaction(function () use ($request, $order, $newStatus) {
-            if ($newStatus === 'completed' && $order->status !== 'completed') {
-                foreach ($order->items as $item) {
-                    Sale::create([
-                        'product_id' => $item->product_id,
-                        'user_id' => $request->user()->user_id,
-                        'quantity' => $item->quantity,
-                        'unit_price' => $item->unit_price,
-                        'total_amount' => $item->line_total,
-                        'sale_date' => now(),
-                        'notes' => 'Order ' . $order->order_number,
-                    ]);
-                }
-            }
-
-            if ($newStatus === 'cancelled' && !in_array($order->status, ['cancelled', 'completed'])) {
-                foreach ($order->items as $item) {
-                    Product::where('product_id', $item->product_id)->increment('stock_qty', $item->quantity);
-                }
-            }
-
-            $order->update([
-                'status' => $newStatus,
-                'handled_by' => $request->user()->user_id,
-            ]);
-        });
+        try {
+            $this->orderStatusService->applyTransition(
+                $order,
+                $newStatus,
+                $request->user()->user_id
+            );
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
 
         $order->refresh()->load('items');
 

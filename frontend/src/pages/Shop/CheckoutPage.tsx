@@ -38,6 +38,22 @@ const CheckoutPage = () => {
     setLoading(true)
     setError('')
     try {
+      const fresh = await ShopService.loadShopProducts()
+      const available = fresh.data.products || []
+      for (const item of items) {
+        const p = available.find((x: { product_id: number }) => x.product_id === item.product_id)
+        if (!p) {
+          setError(`${item.product_name} is no longer available. Please update your cart.`)
+          setLoading(false)
+          return
+        }
+        if (p.stock_qty < item.quantity) {
+          setError(`Only ${p.stock_qty} ${p.unit} left for ${item.product_name}.`)
+          setLoading(false)
+          return
+        }
+      }
+
       const res = await ShopService.storeOrder({
         ...form,
         customer_phone: normalizePhone(form.customer_phone),
@@ -49,7 +65,7 @@ const CheckoutPage = () => {
       const placed = res.data.order
       navigate(`/shop/success/${placed.order_number}`, {
         state: {
-          phone: form.customer_phone,
+          phone: normalizePhone(form.customer_phone),
           customer_name: form.customer_name,
           fulfillment_type: fulfillment,
           total_amount: placed.total_amount,

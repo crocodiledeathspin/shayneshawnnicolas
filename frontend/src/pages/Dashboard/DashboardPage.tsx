@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import DashboardService from '../../services/DashboardService'
 import Spinner from '../../components/Spinner/Spinner'
 
@@ -27,6 +28,14 @@ const DashboardPage = () => {
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Dashboard</h1>
+      {(stats?.pending_orders ?? 0) > 0 && (
+        <Link
+          to="/orders"
+          className="block mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-800 hover:bg-red-100"
+        >
+          {stats?.pending_orders} pending customer order(s) — tap to manage
+        </Link>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <StatCard title="Today's Sales" value={`₱${stats?.today_sales || '0.00'}`} color="orange" />
         <StatCard title="Transactions Today" value={String(stats?.today_transactions || 0)} color="blue" />

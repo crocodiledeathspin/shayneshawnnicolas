@@ -11,15 +11,14 @@ use App\Http\Controllers\Api\StaffController;
 use Illuminate\Support\Facades\Route;
 
 Route::controller(AuthController::class)->prefix('/auth')->group(function () {
-    Route::post('/login', 'login');
+    Route::post('/login', 'login')->middleware('throttle:10,1');
 });
 
-// Public customer shop — no login required
 Route::controller(ShopController::class)->prefix('/shop')->group(function () {
     Route::get('/loadShopCategories', 'loadShopCategories');
     Route::get('/loadShopProducts', 'loadShopProducts');
-    Route::post('/storeOrder', 'storeOrder');
-    Route::get('/trackOrder', 'trackOrder');
+    Route::post('/storeOrder', 'storeOrder')->middleware('throttle:20,1');
+    Route::get('/trackOrder', 'trackOrder')->middleware('throttle:30,1');
 });
 
 Route::middleware('auth:sanctum')->group(function () {

@@ -8,27 +8,20 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Services\N8nWebhookService;
+use App\Support\PhoneNormalizer;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class ShopController extends Controller
 {
-    private function normalizePhone(string $phone): string
-    {
-        $digits = preg_replace('/\D/', '', $phone);
-        if (str_starts_with($digits, '63') && strlen($digits) >= 12) {
-            return '0' . substr($digits, 2);
-        }
-        if (strlen($digits) === 10 && str_starts_with($digits, '9')) {
-            return '0' . $digits;
-        }
-
-        return $digits;
-    }
-
     public function loadShopCategories()
     {
         $categories = Category::where('is_deleted', false)
+            ->whereHas('products', function ($q) {
+                $q->where('is_deleted', false)->where('stock_qty', '>', 0);
+            })
             ->orderBy('category_name')
             ->get();
 
@@ -42,6 +35,7 @@ class ShopController extends Controller
         $query = Product::with(['category'])
             ->where('is_deleted', false)
             ->where('stock_qty', '>', 0)
+            ->whereHas('category', fn ($q) => $q->where('is_deleted', false))
             ->orderBy('product_name');
 
         if ($categoryId) {
@@ -73,10 +67,19 @@ class ShopController extends Controller
             'delivery_address' => ['required_if:fulfillment_type,delivery', 'nullable', 'max:500'],
             'delivery_landmark' => ['nullable', 'max:150'],
             'notes' => ['nullable', 'max:300'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'exists:tbl_products,product_id'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items' => ['required', 'array', 'min:1', 'max:50'],
+            'items.*.product_id' => [
+                'required',
+                Rule::exists('tbl_products', 'product_id')->where('is_deleted', false),
+            ],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:999'],
         ]);
+
+        $validated['customer_phone'] = PhoneNormalizer::normalize($validated['customer_phone']);
+
+        if (strlen($validated['customer_phone']) < 11) {
+            return response()->json(['message' => 'Please enter a valid Philippine mobile number.'], 422);
+        }
 
         $deliveryFee = $validated['fulfillment_type'] === 'delivery'
             ? (float) config('services.store.delivery_fee', 25)
@@ -84,65 +87,68 @@ class ShopController extends Controller
 
         try {
             $order = DB::transaction(function () use ($validated, $deliveryFee) {
-            $subtotal = 0;
-            $lineItems = [];
+                $subtotal = 0;
+                $lineItems = [];
 
-            foreach ($validated['items'] as $item) {
-                $product = Product::where('product_id', $item['product_id'])
-                    ->where('is_deleted', false)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+                foreach ($validated['items'] as $item) {
+                    $product = Product::where('product_id', $item['product_id'])
+                        ->where('is_deleted', false)
+                        ->whereHas('category', fn ($q) => $q->where('is_deleted', false))
+                        ->lockForUpdate()
+                        ->firstOrFail();
 
-                if ($product->stock_qty < $item['quantity']) {
-                    throw new \RuntimeException(
-                        "Insufficient stock for {$product->product_name}. Available: {$product->stock_qty}"
-                    );
+                    if ($product->stock_qty < $item['quantity']) {
+                        throw new \RuntimeException(
+                            "Insufficient stock for {$product->product_name}. Available: {$product->stock_qty}"
+                        );
+                    }
+
+                    $lineTotal = $product->price * $item['quantity'];
+                    $subtotal += $lineTotal;
+
+                    $lineItems[] = [
+                        'product' => $product,
+                        'quantity' => $item['quantity'],
+                        'unit_price' => $product->price,
+                        'line_total' => $lineTotal,
+                    ];
                 }
 
-                $lineTotal = $product->price * $item['quantity'];
-                $subtotal += $lineTotal;
+                $orderNumber = 'AR-' . date('Ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
 
-                $lineItems[] = [
-                    'product' => $product,
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $product->price,
-                    'line_total' => $lineTotal,
-                ];
-            }
-
-            $orderNumber = 'AR-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -5));
-
-            $order = Order::create([
-                'order_number' => $orderNumber,
-                'customer_name' => $validated['customer_name'],
-                'customer_phone' => $this->normalizePhone($validated['customer_phone']),
-                'customer_email' => $validated['customer_email'] ?? null,
-                'fulfillment_type' => $validated['fulfillment_type'],
-                'delivery_address' => $validated['delivery_address'] ?? null,
-                'delivery_landmark' => $validated['delivery_landmark'] ?? null,
-                'status' => 'pending',
-                'payment_method' => 'cash',
-                'subtotal' => $subtotal,
-                'delivery_fee' => $deliveryFee,
-                'total_amount' => $subtotal + $deliveryFee,
-                'notes' => $validated['notes'] ?? null,
-            ]);
-
-            foreach ($lineItems as $line) {
-                OrderItem::create([
-                    'order_id' => $order->order_id,
-                    'product_id' => $line['product']->product_id,
-                    'product_name' => $line['product']->product_name,
-                    'quantity' => $line['quantity'],
-                    'unit_price' => $line['unit_price'],
-                    'line_total' => $line['line_total'],
+                $order = Order::create([
+                    'order_number' => $orderNumber,
+                    'customer_name' => $validated['customer_name'],
+                    'customer_phone' => $validated['customer_phone'],
+                    'customer_email' => $validated['customer_email'] ?? null,
+                    'fulfillment_type' => $validated['fulfillment_type'],
+                    'delivery_address' => $validated['delivery_address'] ?? null,
+                    'delivery_landmark' => $validated['delivery_landmark'] ?? null,
+                    'status' => 'pending',
+                    'payment_method' => 'cash',
+                    'subtotal' => $subtotal,
+                    'delivery_fee' => $deliveryFee,
+                    'total_amount' => $subtotal + $deliveryFee,
+                    'notes' => $validated['notes'] ?? null,
                 ]);
 
-                $line['product']->decrement('stock_qty', $line['quantity']);
-            }
+                foreach ($lineItems as $line) {
+                    OrderItem::create([
+                        'order_id' => $order->order_id,
+                        'product_id' => $line['product']->product_id,
+                        'product_name' => $line['product']->product_name,
+                        'quantity' => $line['quantity'],
+                        'unit_price' => $line['unit_price'],
+                        'line_total' => $line['line_total'],
+                    ]);
 
-            return $order->load('items');
+                    $line['product']->decrement('stock_qty', $line['quantity']);
+                }
+
+                return $order->load('items');
             });
+        } catch (ModelNotFoundException) {
+            return response()->json(['message' => 'One or more products are no longer available.'], 422);
         } catch (\RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
@@ -175,11 +181,11 @@ class ShopController extends Controller
     public function trackOrder(Request $request)
     {
         $validated = $request->validate([
-            'order_number' => ['required', 'string'],
-            'customer_phone' => ['required', 'string'],
+            'order_number' => ['required', 'string', 'max:30'],
+            'customer_phone' => ['required', 'string', 'max:20'],
         ]);
 
-        $phone = $this->normalizePhone($validated['customer_phone']);
+        $phone = PhoneNormalizer::normalize($validated['customer_phone']);
 
         $order = Order::with(['items'])
             ->where('order_number', trim($validated['order_number']))

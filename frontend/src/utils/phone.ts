@@ -1,11 +1,21 @@
-/** Normalize PH mobile numbers so 0917..., 917..., +63917... match */
+/** Normalize PH mobile numbers — matches backend PhoneNormalizer */
 export const normalizePhone = (phone: string): string => {
-  const digits = phone.replace(/\D/g, '')
+  let digits = phone.replace(/\D/g, '')
+
   if (digits.startsWith('63') && digits.length >= 12) {
-    return '0' + digits.slice(2)
+    digits = digits.slice(2)
   }
-  if (digits.length === 10 && digits.startsWith('9')) {
-    return '0' + digits
+
+  if (digits.length >= 10) {
+    const last10 = digits.slice(-10)
+    if (last10.startsWith('9')) {
+      return '0' + last10
+    }
   }
+
+  if (digits.length === 11 && digits.startsWith('09')) {
+    return digits
+  }
+
   return digits
 }
