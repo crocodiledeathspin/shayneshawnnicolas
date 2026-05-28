@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\CustomerDebt;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Sale;
@@ -30,6 +31,15 @@ class DashboardController extends Controller
             ->where('status', 'pending')
             ->count();
 
+        $openDebtCount = CustomerDebt::where('is_deleted', false)
+            ->where('status', 'open')
+            ->count();
+
+        $openDebtBalance = CustomerDebt::where('is_deleted', false)
+            ->where('status', 'open')
+            ->selectRaw('COALESCE(SUM(amount - amount_paid), 0) as total')
+            ->value('total') ?? 0;
+
         $salesByCategory = Sale::where('tbl_sales.is_deleted', false)
             ->whereDate('tbl_sales.sale_date', today())
             ->join('tbl_products', 'tbl_sales.product_id', '=', 'tbl_products.product_id')
@@ -44,6 +54,8 @@ class DashboardController extends Controller
             'total_products' => $totalProducts,
             'low_stock_count' => $lowStockCount,
             'pending_orders' => $pendingOrders,
+            'open_debt_count' => $openDebtCount,
+            'open_debt_balance' => number_format((float) $openDebtBalance, 2, '.', ''),
             'sales_by_category' => $salesByCategory,
         ], 200);
     }

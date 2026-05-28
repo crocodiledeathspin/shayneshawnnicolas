@@ -30,7 +30,7 @@ const OrderSuccessPage = () => {
     <div className="max-w-md mx-auto text-center py-12">
       <div className="text-5xl mb-4">✅</div>
       <h1 className="text-2xl font-bold text-gray-800">Order Placed!</h1>
-      <p className="text-gray-600 mt-2">Thank you for ordering from Aling Rosa&apos;s.</p>
+      <p className="text-gray-600 mt-2">Thank you for ordering from Jojo Store and Snackhouse.</p>
 
       <div className="bg-white border rounded-xl p-6 mt-6 text-left">
         <p className="text-sm text-gray-500 text-center">Order Number</p>

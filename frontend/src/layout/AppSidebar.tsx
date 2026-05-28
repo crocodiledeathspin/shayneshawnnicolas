@@ -7,6 +7,7 @@ const sidebarItems = [
   { path: '/categories', text: 'Categories' },
   { path: '/products', text: 'Products' },
   { path: '/sales', text: 'Sales' },
+  { path: '/debts', text: 'Customer Debts' },
   { path: '/staff', text: 'Staff' },
 ]
 

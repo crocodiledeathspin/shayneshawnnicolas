@@ -1,10 +1,10 @@
 {
-  "name": "Aling Rosa - Order Notification",
+  "name": "Jojo Store and Snackhouse - Order Notification",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "aling-rosa-order",
+        "path": "jojo-store-order",
         "responseMode": "onReceived",
         "options": {}
       },
@@ -12,103 +12,137 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 0],
-      "webhookId": "aling-rosa-order"
+      "position": [240, 300],
+      "webhookId": "jojo-store-order"
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
+        "rules": {
+          "values": [
             {
-              "id": "order-placed",
-              "leftValue": "={{ $json.body.event }}",
-              "rightValue": "order.placed",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "order.placed",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "new_order"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "order.status_updated",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "status_update"
             }
-          ],
-          "combinator": "and"
+          ]
         },
         "options": {}
       },
-      "id": "if-node",
-      "name": "Is New Order?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [220, 0]
+      "id": "switch-node",
+      "name": "Order Event Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "msg1",
+              "name": "notification",
+              "value": "=NEW ORDER: {{ $json.order_number }} | {{ $json.customer_name }} | {{ $json.customer_phone }} | {{ $json.fulfillment_type }} | PHP {{ $json.total_amount }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-new-order",
+      "name": "Format New Order",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [720, 180]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "msg2",
+              "name": "notification",
+              "value": "=STATUS UPDATE: {{ $json.order_number }} is now {{ $json.status }} (was {{ $json.old_status }})",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-status",
+      "name": "Format Status Update",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [720, 420]
     },
     {
       "parameters": {
         "fromEmail": "store@example.com",
-        "toEmail": "={{ $json.body.customer_email || 'owner@example.com' }}",
-        "subject": "=New Order {{ $json.body.order_number }} - Aling Rosa's Store",
+        "toEmail": "={{ $json.customer_email || 'youremail@gmail.com' }}",
+        "subject": "=Order {{ $json.order_number }} - Jojo Store and Snackhouse Store",
         "emailType": "text",
-        "message": "=Hello {{ $json.body.customer_name }},\n\nWe received your order {{ $json.body.order_number }}.\nType: {{ $json.body.fulfillment_type }}\nTotal: PHP {{ $json.body.total_amount }}\n\nWe will prepare it soon. Track at the shop page.\n\nThank you!\nAling Rosa's Sari-Sari, Street Food & Shakes\nRoxas City"
+        "message": "={{ $json.notification }}"
       },
-      "id": "email-node",
-      "name": "Send Email",
+      "id": "email-new",
+      "name": "Email Customer (optional)",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
-      "position": [480, -80],
-      "credentials": {
-        "smtp": {
-          "id": "CONFIGURE_SMTP",
-          "name": "SMTP account"
-        }
-      }
+      "position": [960, 180],
+      "disabled": true
     },
     {
       "parameters": {
-        "content": "## Setup\n1. Import this workflow in n8n\n2. Activate workflow\n3. Copy Webhook URL to backend `.env` as `N8N_WEBHOOK_URL`\n4. Configure SMTP credentials for email node\n5. Place a test order from http://localhost:5173/shop",
-        "height": 200,
-        "width": 400
+        "content": "## Setup (required)\n\n1. **Activate** this workflow (toggle ON)\n2. Open **Webhook** node → copy **Production URL**\n3. Paste in `backend/.env`:\n   `N8N_WEBHOOK_URL=https://your-n8n/webhook/jojo-store-order`\n4. Restart: `php artisan serve`\n5. Place test order at `/shop`\n6. Check **Executions** tab in n8n\n\nLaravel sends JSON at root: `$json.event`, `$json.order_number`, etc.\n\n**Email node is disabled by default** — enable only after SMTP credentials are set.",
+        "height": 280,
+        "width": 420
       },
       "id": "sticky-note",
       "name": "Sticky Note",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [-200, -200]
+      "position": [200, 40]
     }
   ],
   "connections": {
     "Webhook": {
+      "main": [[{ "node": "Order Event Type", "type": "main", "index": 0 }]]
+    },
+    "Order Event Type": {
       "main": [
-        [
-          {
-            "node": "Is New Order?",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Format New Order", "type": "main", "index": 0 }],
+        [{ "node": "Format Status Update", "type": "main", "index": 0 }]
       ]
     },
-    "Is New Order?": {
-      "main": [
-        [
-          {
-            "node": "Send Email",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
-      ]
+    "Format New Order": {
+      "main": [[{ "node": "Email Customer (optional)", "type": "main", "index": 0 }]]
     }
   },
   "active": false,
-  "settings": {
-    "executionOrder": "v1"
-  },
-  "versionId": "1",
-  "meta": {
-    "instanceId": "aling-rosa-store"
-  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "instanceId": "jojo-store-store" },
   "tags": []
 }

@@ -9,7 +9,7 @@ const CustomerLayout = () => {
       <header className="bg-white border-b sticky top-0 z-40 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/shop" className="font-bold text-orange-600 text-lg">
-            Aling Rosa&apos;s Store
+            Jojo Store and Snackhouse
           </Link>
           <nav className="flex items-center gap-4 text-sm">
             <Link to="/shop" className="text-gray-700 hover:text-orange-600">

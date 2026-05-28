@@ -18,6 +18,7 @@ const SaleList: FC<Props> = ({ refreshKey, onCancel, triggerRefresh }) => {
     setLoading(true)
     SaleService.loadSales()
       .then((res) => setSales(res.data.sales || []))
+      .catch(() => setSales([]))
       .finally(() => setLoading(false))
   }
 

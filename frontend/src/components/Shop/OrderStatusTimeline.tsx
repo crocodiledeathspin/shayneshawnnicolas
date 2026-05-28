@@ -30,7 +30,7 @@ const STATUS_BANNERS: Record<
   ready_for_pickup: {
     bg: 'bg-green-200 border-green-500 text-green-900',
     text: '🎉 READY FOR PICKUP',
-    message: 'Your order is READY! Please come to Aling Rosa\'s store to pick it up.',
+    message: 'Your order is READY! Please come to Jojo Store and Snackhouse to pick it up.',
   },
   out_for_delivery: {
     bg: 'bg-blue-200 border-blue-500 text-blue-900',

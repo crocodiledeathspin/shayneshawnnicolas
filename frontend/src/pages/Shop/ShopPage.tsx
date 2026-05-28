@@ -13,7 +13,7 @@ const ShopPage = () => {
   const { addItem } = useCart()
 
   useEffect(() => {
-    document.title = "Order Online - Aling Rosa's"
+    document.title = 'Order Online - Jojo Store and Snackhouse'
     ShopService.loadShopCategories().then((res) => setCategories(res.data.categories || []))
     loadProducts()
   }, [])
@@ -36,9 +36,9 @@ const ShopPage = () => {
   return (
     <div>
       <div className="bg-white rounded-xl p-6 mb-6 border border-orange-100">
-        <h1 className="text-2xl font-bold text-gray-800">Order Street Food, Shakes &amp; More</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Order from Jojo Store and Snackhouse</h1>
         <p className="text-gray-600 mt-1">
-          Pickup or delivery in {deliveryArea || 'Roxas City'}. No account needed — just your name and phone.
+          Sari-sari essentials and snack house favorites. Pickup or delivery in {deliveryArea || 'local area'}. No account needed — name and phone only.
         </p>
       </div>
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CustomerDebtController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
@@ -51,6 +52,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/loadSales', 'loadSales');
         Route::post('/storeSale', 'storeSale');
         Route::put('/destroySale/{sale}', 'destroySale');
+    });
+
+    Route::controller(CustomerDebtController::class)->prefix('/debt')->group(function () {
+        Route::get('/loadDebts', 'loadDebts');
+        Route::post('/storeDebt', 'storeDebt');
+        Route::put('/recordPayment/{debt}', 'recordPayment');
+        Route::put('/destroyDebt/{debt}', 'destroyDebt');
     });
 
     Route::controller(OrderController::class)->prefix('/order')->group(function () {

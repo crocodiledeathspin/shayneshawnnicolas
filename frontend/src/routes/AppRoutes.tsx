@@ -10,6 +10,7 @@ import DeleteCategoryPage from '../pages/Category/DeleteCategoryPage'
 import ProductMainPage from '../pages/Product/ProductMainPage'
 import SaleMainPage from '../pages/Sale/SaleMainPage'
 import StaffMainPage from '../pages/Staff/StaffMainPage'
+import CustomerDebtsMainPage from '../pages/Debt/CustomerDebtsMainPage'
 import OrdersMainPage from '../pages/Order/OrdersMainPage'
 import ShopPage from '../pages/Shop/ShopPage'
 import CartPage from '../pages/Shop/CartPage'
@@ -45,6 +46,7 @@ const AppRoutes = () => (
       <Route path="/category/delete/:category_id" element={<DeleteCategoryPage />} />
       <Route path="/products" element={<ProductMainPage />} />
       <Route path="/sales" element={<SaleMainPage />} />
+      <Route path="/debts" element={<CustomerDebtsMainPage />} />
       <Route path="/staff" element={<StaffMainPage />} />
     </Route>
   </Routes>

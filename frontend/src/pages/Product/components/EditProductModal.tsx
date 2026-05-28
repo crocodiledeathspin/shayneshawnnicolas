@@ -46,7 +46,6 @@ const EditProductModal: FC<Props> = ({ isOpen, product, onClose, onSuccess }) =>
     if (!product) return
     setLoading(true)
     const fd = new FormData()
-    fd.append('_method', 'PUT')
     fd.append('product_name', form.product_name)
     fd.append('category', form.category)
     fd.append('description', form.description)

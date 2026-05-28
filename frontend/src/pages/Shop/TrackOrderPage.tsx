@@ -112,7 +112,7 @@ const TrackOrderPage = () => {
       <form onSubmit={handleTrack} className="bg-white rounded-xl border p-6 space-y-4 mb-6">
         <input
           className="w-full border-2 rounded-lg px-4 py-3"
-          placeholder="Order number (e.g. AR-20260524-ABC12)"
+          placeholder="Order number (e.g. JS-20260524-ABC12)"
           value={orderNumber}
           onChange={(e) => setOrderNumber(e.target.value)}
           required

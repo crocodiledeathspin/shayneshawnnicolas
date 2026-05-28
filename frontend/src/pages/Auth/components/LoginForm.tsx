@@ -71,7 +71,7 @@ const LoginForm: FC<LoginFormProps> = ({ message }) => {
       </p>
       <p className="text-center mt-4 pt-4 border-t">
         <Link to="/shop" className="text-orange-600 font-medium hover:underline">
-          
+          Order online (customer)
         </Link>
       </p>
     </form>

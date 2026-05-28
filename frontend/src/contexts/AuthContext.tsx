@@ -32,8 +32,11 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }
 
   const logout = async () => {
-    const res = await AuthService.logout()
-    if (res.status === 200) {
+    try {
+      await AuthService.logout()
+    } catch {
+      // Token may already be invalid; still clear local session
+    } finally {
       localStorage.removeItem('token')
       setUser(null)
     }

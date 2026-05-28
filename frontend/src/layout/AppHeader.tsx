@@ -10,8 +10,11 @@ const AppHeader = () => {
   const navigate = useNavigate()
 
   const handleLogout = async () => {
-    await logout()
-    navigate('/')
+    try {
+      await logout()
+    } finally {
+      navigate('/')
+    }
   }
 
   return (
@@ -25,7 +28,7 @@ const AppHeader = () => {
             ☰
           </button>
           <span className="font-bold text-orange-600 text-lg">
-            Aling Rosa&apos;s Store
+            Jojo Store and Snackhouse
           </span>
         </div>
         <div className="relative">

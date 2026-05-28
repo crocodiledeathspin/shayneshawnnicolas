@@ -13,7 +13,7 @@ const LoginPage = () => {
     useToastMessage()
 
   useEffect(() => {
-    document.title = "Aling Rosa's Store - Login"
+    document.title = 'Jojo Store and Snackhouse - Staff Login'
   }, [])
 
   if (loading) {

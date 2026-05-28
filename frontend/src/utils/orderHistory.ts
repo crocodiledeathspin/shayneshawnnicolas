@@ -1,4 +1,4 @@
-const HISTORY_KEY = 'aling_rosa_order_history'
+const HISTORY_KEY = 'jojo_store_order_history'
 const MAX_ORDERS = 20
 
 export interface SavedOrder {

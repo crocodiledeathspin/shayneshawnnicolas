@@ -68,6 +68,9 @@ const OrdersMainPage = () => {
         setHasMore(res.data.has_more_pages)
         setPage(res.data.current_page)
       })
+      .catch(() => {
+        if (!append) setOrders([])
+      })
       .finally(() => setLoading(false))
   }
 

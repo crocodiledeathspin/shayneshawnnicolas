@@ -27,7 +27,7 @@ const CheckoutPage = () => {
     if (itemCount === 0) navigate('/shop/cart')
     ShopService.loadShopProducts().then((res) => {
       setDeliveryFee(Number(res.data.delivery_fee) || 25)
-      setDeliveryArea(res.data.delivery_area || 'Roxas City')
+      setDeliveryArea(res.data.delivery_area || 'local area')
     })
   }, [itemCount, navigate])
 

@@ -53,7 +53,7 @@ class ShopController extends Controller
         return response()->json([
             'products' => $products,
             'delivery_fee' => (float) config('services.store.delivery_fee', 25),
-            'delivery_area' => config('services.store.delivery_area', 'Roxas City, Capiz'),
+            'delivery_area' => config('services.store.delivery_area', 'Local delivery area'),
         ], 200);
     }
 
@@ -114,7 +114,7 @@ class ShopController extends Controller
                     ];
                 }
 
-                $orderNumber = 'AR-' . date('Ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
+                $orderNumber = 'JS-' . date('Ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
 
                 $order = Order::create([
                     'order_number' => $orderNumber,

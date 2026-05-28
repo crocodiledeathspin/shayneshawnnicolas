@@ -19,7 +19,7 @@ interface CartContextType {
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
-const CART_KEY = 'aling_rosa_cart'
+const CART_KEY = 'jojo_store_cart'
 
 export const CartProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>(() => {

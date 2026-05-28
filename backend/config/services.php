@@ -35,7 +35,7 @@ return [
 
     'store' => [
         'delivery_fee' => env('STORE_DELIVERY_FEE', 25),
-        'delivery_area' => env('STORE_DELIVERY_AREA', 'Roxas City, Capiz'),
+        'delivery_area' => env('STORE_DELIVERY_AREA', 'Local delivery area'),
     ],
 
 ];
